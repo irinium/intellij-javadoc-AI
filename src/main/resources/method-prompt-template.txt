@@ -1,0 +1,4 @@
+Generate a Javadoc comment for the following %s in a Java project:
+%s
+
+Javadoc comment:

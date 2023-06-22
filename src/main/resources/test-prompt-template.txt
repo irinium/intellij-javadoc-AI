@@ -1,0 +1,11 @@
+Generate a Javadoc comment for the following %s using example:
+/**
+   * Test for {@link Class#method(String)}.<br>
+   * Case: The code provided is null.<br>
+   * Result: A {@link IOException} is thrown.
+   */
+in a Java project:
+
+%s
+
+Javadoc comment:
