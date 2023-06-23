@@ -7,25 +7,38 @@ import com.github.intellijjavadocai.service.GptExecutorService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import javax.swing.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+
 
 @Slf4j
 public class GenerateJavadocsAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    if (project == null || psiFile == null) return;
+    if (project == null || isDumbMode(project)) {
+      return;
+    }
 
     log.info("Generate Javadocs Action for the project {} started", project.getName());
 
-    if (isDumbMode(project)) {
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) {
+      return;
+    }
+
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+
+    if (!(psiFile instanceof PsiJavaFile)) {
       return;
     }
 
@@ -38,7 +51,7 @@ public class GenerateJavadocsAction extends AnAction {
     psiFile.accept(
         new PsiRecursiveElementVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             super.visitElement(element);
 
             if (element instanceof PsiMethod) {
@@ -97,13 +110,26 @@ public class GenerateJavadocsAction extends AnAction {
   }
 
   private void insertJavadocComment(Project project, PsiElement element, String javadocText) {
-    Document document =
-        FileDocumentManager.getInstance().getDocument(element.getContainingFile().getVirtualFile());
+    Document document = FileDocumentManager.getInstance().getDocument(element.getContainingFile().getVirtualFile());
     if (document != null) {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-      int offset = element.getTextOffset();
-      document.insertString(offset, javadocText + "\n");
-      PsiDocumentManager.getInstance(project).commitDocument(document);
+
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (element instanceof PsiMethod || element instanceof PsiClass) {
+            int startPosition = element instanceof PsiMethod
+                                ? ((PsiMethod) element).getModifierList().getTextRange().getStartOffset()
+                                : ((PsiClass) element).getModifierList().getTextRange().getStartOffset();
+            int lineNumber = document.getLineNumber(startPosition);
+            int lineStartPosition = document.getLineStartOffset(lineNumber);
+
+            // Modify starting block comment based on generated Javadoc
+            String openingJavadoc = javadocText.startsWith("/**") ? "" : "/**";
+            document.insertString(lineStartPosition, openingJavadoc + javadocText.trim() + "*/\n");
+            PsiDocumentManager.getInstance(project).commitDocument(document);
+          }
+        });
+      }, "Insert Javadoc", "Generate Javadocs with AI");
     }
   }
 

@@ -19,7 +19,7 @@ public class GptApiService {
     headers.set("Authorization", "Bearer " + apiConfig.getOpenaiApiKey());
 
     JSONObject bodyJson =
-        new JSONObject().put("prompt", prompt).put("model", "text-davinci-003");
+        new JSONObject().put("prompt", prompt).put("model", apiConfig.getMadelName());
     HttpEntity<String> entity = new HttpEntity<>(bodyJson.toString(), headers);
 
     return gptExecutorService.sendPromptWithRetry(entity);

@@ -29,10 +29,14 @@ public class ApiConfig {
   }
 
   public String getMaxRetries() {
-    return openaiProperties.getProperty("openapi.maxRetries");
+    return openaiProperties.getProperty("openai.maxRetries");
   }
 
   public String getWaitDuration() {
     return openaiProperties.getProperty("openai.waitDuration");
+  }
+
+  public String getMadelName() {
+    return openaiProperties.getProperty("openai.modelName");
   }
 }
