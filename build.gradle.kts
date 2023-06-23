@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.intellij") version "1.6.0"
+    id("com.github.sherter.google-java-format") version "0.9"
 }
 
 group = "com.github"
@@ -21,11 +22,11 @@ intellij {
 
 dependencies {
     implementation("org.springframework:spring-web:5.3.16")
-    implementation("org.springframework:spring-context:5.3.16")
-    implementation("org.springframework.boot:spring-boot:2.6.3")
     implementation("org.json:json:20090211")
     compileOnly("org.projectlombok:lombok:1.18.24")
     annotationProcessor("org.projectlombok:lombok:1.18.24")
+    implementation("org.slf4j:slf4j-api:2.0.5")
+    implementation("org.slf4j:slf4j-simple:2.0.5")
 }
 
 tasks {

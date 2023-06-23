@@ -1,20 +1,38 @@
 package com.github.intellijjavadocai.config;
 
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+import lombok.extern.slf4j.Slf4j;
 
-@Component
-@Getter
+@Slf4j
 public class ApiConfig {
-    @Value("${openai.api.key}")
-    private String openaiApiKey;
 
-    @Value("${openai.api.url}")
-    private String openaiApiUrl;
+  private final Properties openaiProperties =
+      new Properties() {
+        {
+          try (InputStream input =
+              ApiConfig.class.getClassLoader().getResourceAsStream("openai/config.properties")) {
+            load(input);
+          } catch (IOException e) {
+            log.error("Error while loading openai properties: {}", e.getMessage());
+          }
+        }
+      };
 
-    @Value("${openai.api.maxRetries}")
-    private int maxRetries;
-    @Value("${openai.api.waitDuration}")
-    private Long waitDuration;
+  public String getOpenaiApiKey() {
+    return openaiProperties.getProperty("openai.apiKey");
+  }
+
+  public String getOpenaiApiUrl() {
+    return openaiProperties.getProperty("openai.apiUrl");
+  }
+
+  public String getMaxRetries() {
+    return openaiProperties.getProperty("openapi.maxRetries");
+  }
+
+  public String getWaitDuration() {
+    return openaiProperties.getProperty("openai.waitDuration");
+  }
 }
