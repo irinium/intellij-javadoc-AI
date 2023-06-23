@@ -30,6 +30,7 @@ public class ExecutorService {
         int attempts = 0;
 
         while (attempts < apiConfig.getMaxRetries() && result.isEmpty()) {
+            log.info("Attempting to send {} attempts", attempts);
             ResponseEntity<String> responseEntity = restTemplate.exchange(apiConfig.getOpenaiApiUrl(), HttpMethod.POST, entity, String.class);
 
             if (responseEntity.getStatusCode().is2xxSuccessful()) {

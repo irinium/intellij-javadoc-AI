@@ -12,7 +12,6 @@ repositories {
 }
 
 // Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
     version.set("2021.3")
     type.set("IC") // Target IDE Platform
@@ -26,10 +25,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot:2.6.3")
     implementation("org.json:json:20090211")
     compileOnly("org.projectlombok:lombok:1.18.24")
+    annotationProcessor("org.projectlombok:lombok:1.18.24")
 }
 
 tasks {
-    // Set the JVM compatibility versions
     withType<JavaCompile> {
         sourceCompatibility = "11"
         targetCompatibility = "11"
