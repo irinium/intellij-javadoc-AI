@@ -1,4 +1,4 @@
-Generate a Javadoc comment for the following %s in a Java project:
+Please provide a complete multiline Javadoc comment including opening and closing comment markers (/** ... */) for the following code:
 %s
 
 Javadoc comment:

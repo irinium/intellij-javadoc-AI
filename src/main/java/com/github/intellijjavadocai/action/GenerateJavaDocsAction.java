@@ -1,9 +1,9 @@
-package com.github.intellijjavadocai;
+package com.github.intellijjavadocai.action;
 
 import com.github.intellijjavadocai.config.ApiConfig;
-import com.github.intellijjavadocai.generator.ChatGPTJavadocGenerator;
-import com.github.intellijjavadocai.service.GptApiService;
-import com.github.intellijjavadocai.service.GptExecutorService;
+import com.github.intellijjavadocai.generator.JavaDocsGenerator;
+import com.github.intellijjavadocai.service.PromptService;
+import com.github.intellijjavadocai.service.ExecutorService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 @Slf4j
-public class GenerateJavadocsAction extends AnAction {
+public class GenerateJavaDocsAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -44,9 +44,9 @@ public class GenerateJavadocsAction extends AnAction {
 
     // Get services from the project
     ApiConfig apiConfig = project.getService(ApiConfig.class);
-    GptExecutorService executorService = new GptExecutorService(apiConfig);
-    GptApiService gptApiService = new GptApiService(apiConfig, executorService);
-    ChatGPTJavadocGenerator generator = new ChatGPTJavadocGenerator(gptApiService);
+    ExecutorService executorService = project.getService(ExecutorService.class);
+    PromptService promptService = new PromptService(apiConfig, executorService);
+    JavaDocsGenerator generator = new JavaDocsGenerator(promptService);
 
     psiFile.accept(
         new PsiRecursiveElementVisitor() {
@@ -79,24 +79,24 @@ public class GenerateJavadocsAction extends AnAction {
   }
 
   private void handlePsiMethod(
-      PsiMethod method, ChatGPTJavadocGenerator generator, Project project) {
+      PsiMethod method, JavaDocsGenerator generator, Project project) {
     if (method.getDocComment() != null) return;
 
     String javadoc =
         isTestMethod(method)
-            ? generator.generateJavadoc(method.getText(), method.getName(), true)
-            : generator.generateJavadoc(method.getText(), method.getName(), false);
+            ? generator.generateJavaDoc(method.getText(), true)
+            : generator.generateJavaDoc(method.getText(), false);
     if (!javadoc.isEmpty()) {
       insertJavadocComment(project, method, javadoc);
     }
   }
 
   private void handlePsiClass(
-      PsiClass psiClass, ChatGPTJavadocGenerator generator, Project project) {
+      PsiClass psiClass, JavaDocsGenerator generator, Project project) {
     if (psiClass.getDocComment() != null) return;
 
     String javadoc =
-        generator.generateJavadoc("Class " + psiClass.getName(), psiClass.getName(), false);
+        generator.generateJavaDoc("Class " + psiClass.getName(), false);
     if (!javadoc.isEmpty()) {
       insertJavadocComment(project, psiClass, javadoc);
     }
@@ -114,7 +114,7 @@ public class GenerateJavadocsAction extends AnAction {
     if (document != null) {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
 
-      CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().executeCommand(project, () ->
         ApplicationManager.getApplication().runWriteAction(() -> {
           if (element instanceof PsiMethod || element instanceof PsiClass) {
             int startPosition = element instanceof PsiMethod
@@ -125,11 +125,10 @@ public class GenerateJavadocsAction extends AnAction {
 
             // Modify starting block comment based on generated Javadoc
             String openingJavadoc = javadocText.startsWith("/**") ? "" : "/**";
-            document.insertString(lineStartPosition, openingJavadoc + javadocText.trim() + "*/\n");
+            document.insertString(lineStartPosition, openingJavadoc + javadocText.trim() + "\n");
             PsiDocumentManager.getInstance(project).commitDocument(document);
           }
-        });
-      }, "Insert Javadoc", "Generate Javadocs with AI");
+        }), "Insert Javadoc", "Generate Javadocs with AI");
     }
   }
 
