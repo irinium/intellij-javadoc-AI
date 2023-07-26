@@ -1,11 +1,11 @@
-Generate a Javadoc comment for the following %s using example:
-/**
-   * Test for {@link Class#method(String)}.<br>
-   * Case: The code provided is null.<br>
-   * Result: A {@link IOException} is thrown.
-   */
-in a Java project:
+Here's the code snippet that should be covered by java documentation:
 
 %s
 
-Javadoc comment:
+Please provide a complete multiline Javadoc comment, including opening and closing comment markers (/** ... */), similar to the following example:
+
+/**
+   * Test for {@link Class#methodName(String)}.
+   * Case: The provided id is present in the database.
+   * Result: No exception should be thrown.
+   */

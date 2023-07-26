@@ -6,7 +6,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
@@ -16,26 +23,42 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
-public class GptExecutorService {
+public class ExecutorService {
   private final RestTemplate restTemplate;
-  private final ApiConfig apiConfig;
   private final ScheduledExecutorService scheduledExecutorService;
+  private final Project project;
 
-  public GptExecutorService(ApiConfig apiConfig) {
-    this.apiConfig = apiConfig;
+  public ExecutorService(Project project) {
     this.restTemplate = new RestTemplate();
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     restTemplate.setErrorHandler(new GptApiErrorHandler());
+    this.project = project;
+  }
+
+  public void sendPromptWithRetryInBackground(HttpEntity<String> entity, Consumer<String> onSuccess, Consumer<String> onError) {
+    Task.Backgroundable task = new Task.Backgroundable(project, "Sending API Request", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          String result = sendPromptWithRetry(entity);
+          onSuccess.accept(result);
+        } catch (Exception e) {
+          onError.accept(e.getMessage());
+        }
+      }
+    };
+
+    ProgressManager.getInstance().run(task);
   }
 
   String sendPromptWithRetry(HttpEntity<String> entity) throws JSONException {
     String result = "";
     int attempts = 0;
 
-    while (attempts < Integer.parseInt(apiConfig.getMaxRetries()) && result.isEmpty()) {
-      log.info("Attempting to send request to {} with {} attempts", apiConfig.getOpenaiApiUrl(), attempts);
+    while (attempts < Integer.parseInt(ApiConfig.getMaxRetries()) && result.isEmpty()) {
+      log.info("Attempting to send request to {} with {} attempts", ApiConfig.getOpenaiApiUrl(), attempts);
       ResponseEntity<String> responseEntity =
-          restTemplate.exchange(apiConfig.getOpenaiApiUrl(), HttpMethod.POST, entity, String.class);
+          restTemplate.exchange(ApiConfig.getOpenaiApiUrl(), HttpMethod.POST, entity, String.class);
 
       if (responseEntity.getStatusCode().is2xxSuccessful()) {
         if (responseEntity.getBody() != null) {
@@ -62,7 +85,7 @@ public class GptExecutorService {
 
   private int getAttempts(String result, int attempts, ScheduledExecutorService executorService) {
     if (result.isEmpty()) {
-      long sleepTime = (long) (Long.parseLong(apiConfig.getWaitDuration()) * Math.pow(2, attempts));
+      long sleepTime = (long) (Long.parseLong(ApiConfig.getWaitDuration()) * Math.pow(2, attempts));
       attempts++;
       try {
         final CountDownLatch latch = new CountDownLatch(1);

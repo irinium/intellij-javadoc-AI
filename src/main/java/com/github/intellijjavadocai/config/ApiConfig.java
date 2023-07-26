@@ -8,35 +8,39 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ApiConfig {
 
-  private final Properties openaiProperties =
-      new Properties() {
-        {
-          try (InputStream input =
-              ApiConfig.class.getClassLoader().getResourceAsStream("openai/config.properties")) {
-            load(input);
-          } catch (IOException e) {
-            log.error("Error while loading openai properties: {}", e.getMessage());
-          }
-        }
-      };
+  private static final Properties openaiProperties = new Properties() {{
+      try (InputStream input = ApiConfig.class.getClassLoader().getResourceAsStream("openai/config.properties")) {
+        load(input);
+      }
+      catch (IOException e) {
+        log.error("Error while loading openai properties: {}", e.getMessage());
+      }
+    }};
 
-  public String getOpenaiApiKey() {
-    return openaiProperties.getProperty("openai.apiKey");
+  public static String getOpenaiApiKey() {
+    return System.getenv("OPENAI_API_KEY");
   }
 
-  public String getOpenaiApiUrl() {
+  public static String getOpenaiApiUrl() {
     return openaiProperties.getProperty("openai.apiUrl");
   }
 
-  public String getMaxRetries() {
+  public static String getMaxRetries() {
     return openaiProperties.getProperty("openai.maxRetries");
   }
 
-  public String getWaitDuration() {
+  public static String getWaitDuration() {
     return openaiProperties.getProperty("openai.waitDuration");
   }
 
-  public String getMadelName() {
+  public static String getModelName() {
     return openaiProperties.getProperty("openai.modelName");
+  }
+
+  public static String getMaxTokens() {
+    return openaiProperties.getProperty("openai.maxTokens");
+  }
+  public static String getTemperature() {
+    return openaiProperties.getProperty("openai.temperature");
   }
 }

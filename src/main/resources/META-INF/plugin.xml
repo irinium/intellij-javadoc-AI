@@ -27,13 +27,13 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="com.github.intellijjavadocai.generator.ChatGPTJavadocGenerator"/>
+        <projectService serviceImplementation="com.github.intellijjavadocai.generator.JavaDocsGenerator"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="com.github.intellijjavadocai.service.GptApiService"/>
+        <projectService serviceImplementation="com.github.intellijjavadocai.service.PromptService"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="com.github.intellijjavadocai.service.GptExecutorService"/>
+        <projectService serviceImplementation="com.github.intellijjavadocai.service.ExecutorService"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="com.github.intellijjavadocai.config.ApiConfig"/>
@@ -41,7 +41,7 @@
 
     <!-- Actions defined by the plugin -->
     <actions>
-        <action id="com.github.intellijjavadocai.GenerateJavadocsAction" class="com.github.intellijjavadocai.GenerateJavadocsAction"
+        <action id="com.github.intellijjavadocai.action.GenerateJavaDocsAction" class="com.github.intellijjavadocai.action.GenerateJavaDocsAction"
                 text="Generate Javadocs Using GPT-3" description="Generate Javadocs using GPT-3 for uncovered methods">
             <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt G"/>
         </action>
