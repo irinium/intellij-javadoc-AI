@@ -7,7 +7,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.ResponseErrorHandler;
 
 @Slf4j
-public class GptApiErrorHandler implements ResponseErrorHandler {
+public class ErrorHandler implements ResponseErrorHandler {
 
   @Override
   public boolean hasError(ClientHttpResponse response) throws IOException {

@@ -8,7 +8,7 @@ import org.json.JSONException;
 
 @Slf4j
 @RequiredArgsConstructor
-public class JavaDocsGenerator {
+public class Generator {
 
   public static final String METHOD_PROMPT_TEMPLATE = "method-prompt-template.txt";
   public static final String TEST_PROMPT_TEMPLATE = "test-prompt-template.txt";
@@ -17,7 +17,7 @@ public class JavaDocsGenerator {
 
   public String generateJavaDoc(String codeSnippet, boolean isTest) {
     String promptTemplate =
-                    isTest
+        isTest
             ? promptService.readPrompt(TEST_PROMPT_TEMPLATE)
             : promptService.readPrompt(METHOD_PROMPT_TEMPLATE);
 

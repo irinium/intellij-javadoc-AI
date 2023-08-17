@@ -8,14 +8,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ApiConfig {
 
-  private static final Properties openaiProperties = new Properties() {{
-      try (InputStream input = ApiConfig.class.getClassLoader().getResourceAsStream("openai/config.properties")) {
-        load(input);
-      }
-      catch (IOException e) {
-        log.error("Error while loading openai properties: {}", e.getMessage());
-      }
-    }};
+  private static final Properties openaiProperties =
+      new Properties() {
+        {
+          try (InputStream input =
+              ApiConfig.class.getClassLoader().getResourceAsStream("openai/config.properties")) {
+            load(input);
+          } catch (IOException e) {
+            log.error("Error while loading openai properties: {}", e.getMessage());
+          }
+        }
+      };
 
   public static String getOpenaiApiKey() {
     return System.getenv("OPENAI_API_KEY");
@@ -40,6 +43,7 @@ public class ApiConfig {
   public static String getMaxTokens() {
     return openaiProperties.getProperty("openai.maxTokens");
   }
+
   public static String getTemperature() {
     return openaiProperties.getProperty("openai.temperature");
   }
