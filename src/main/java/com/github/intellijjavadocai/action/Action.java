@@ -1,9 +1,8 @@
 package com.github.intellijjavadocai.action;
 
-import com.github.intellijjavadocai.config.ApiConfig;
-import com.github.intellijjavadocai.generator.JavaDocsGenerator;
-import com.github.intellijjavadocai.service.PromptService;
+import com.github.intellijjavadocai.generator.Generator;
 import com.github.intellijjavadocai.service.ExecutorService;
+import com.github.intellijjavadocai.service.PromptService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -19,9 +18,8 @@ import javax.swing.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-
 @Slf4j
-public class GenerateJavaDocsAction extends AnAction {
+public class Action extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -43,10 +41,9 @@ public class GenerateJavaDocsAction extends AnAction {
     }
 
     // Get services from the project
-    ApiConfig apiConfig = project.getService(ApiConfig.class);
     ExecutorService executorService = project.getService(ExecutorService.class);
-    PromptService promptService = new PromptService(apiConfig, executorService);
-    JavaDocsGenerator generator = new JavaDocsGenerator(promptService);
+    PromptService promptService = new PromptService(executorService);
+    Generator generator = new Generator(promptService);
 
     psiFile.accept(
         new PsiRecursiveElementVisitor() {
@@ -78,8 +75,7 @@ public class GenerateJavaDocsAction extends AnAction {
     return false;
   }
 
-  private void handlePsiMethod(
-      PsiMethod method, JavaDocsGenerator generator, Project project) {
+  private void handlePsiMethod(PsiMethod method, Generator generator, Project project) {
     if (method.getDocComment() != null) return;
 
     String javadoc =
@@ -91,12 +87,10 @@ public class GenerateJavaDocsAction extends AnAction {
     }
   }
 
-  private void handlePsiClass(
-      PsiClass psiClass, JavaDocsGenerator generator, Project project) {
+  private void handlePsiClass(PsiClass psiClass, Generator generator, Project project) {
     if (psiClass.getDocComment() != null) return;
 
-    String javadoc =
-        generator.generateJavaDoc("Class " + psiClass.getName(), false);
+    String javadoc = generator.generateJavaDoc("Class " + psiClass.getName(), false);
     if (!javadoc.isEmpty()) {
       insertJavadocComment(project, psiClass, javadoc);
     }
@@ -110,25 +104,41 @@ public class GenerateJavaDocsAction extends AnAction {
   }
 
   private void insertJavadocComment(Project project, PsiElement element, String javadocText) {
-    Document document = FileDocumentManager.getInstance().getDocument(element.getContainingFile().getVirtualFile());
+    Document document =
+        FileDocumentManager.getInstance().getDocument(element.getContainingFile().getVirtualFile());
     if (document != null) {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
 
-      CommandProcessor.getInstance().executeCommand(project, () ->
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          if (element instanceof PsiMethod || element instanceof PsiClass) {
-            int startPosition = element instanceof PsiMethod
-                                ? ((PsiMethod) element).getModifierList().getTextRange().getStartOffset()
-                                : ((PsiClass) element).getModifierList().getTextRange().getStartOffset();
-            int lineNumber = document.getLineNumber(startPosition);
-            int lineStartPosition = document.getLineStartOffset(lineNumber);
+      CommandProcessor.getInstance()
+          .executeCommand(
+              project,
+              () ->
+                  ApplicationManager.getApplication()
+                      .runWriteAction(
+                          () -> {
+                            if (element instanceof PsiMethod || element instanceof PsiClass) {
+                              int startPosition =
+                                  element instanceof PsiMethod
+                                      ? ((PsiMethod) element)
+                                          .getModifierList()
+                                          .getTextRange()
+                                          .getStartOffset()
+                                      : ((PsiClass) element)
+                                          .getModifierList()
+                                          .getTextRange()
+                                          .getStartOffset();
+                              int lineNumber = document.getLineNumber(startPosition);
+                              int lineStartPosition = document.getLineStartOffset(lineNumber);
 
-            // Modify starting block comment based on generated Javadoc
-            String openingJavadoc = javadocText.startsWith("/**") ? "" : "/**";
-            document.insertString(lineStartPosition, openingJavadoc + javadocText.trim() + "\n");
-            PsiDocumentManager.getInstance(project).commitDocument(document);
-          }
-        }), "Insert Javadoc", "Generate Javadocs with AI");
+                              // Modify starting block comment based on generated Javadoc
+                              String openingJavadoc = javadocText.startsWith("/**") ? "" : "/**";
+                              document.insertString(
+                                  lineStartPosition, openingJavadoc + javadocText.trim() + "\n");
+                              PsiDocumentManager.getInstance(project).commitDocument(document);
+                            }
+                          }),
+              "Insert Javadoc",
+              "Generate Javadocs with AI");
     }
   }
 

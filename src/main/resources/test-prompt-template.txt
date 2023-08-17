@@ -1,4 +1,4 @@
-Here's the code snippet that should be covered by java documentation:
+Here's the code snippet:
 
 %s
 
