@@ -45,21 +45,25 @@ public class Action extends AnAction {
     PromptService promptService = new PromptService(executorService);
     Generator generator = new Generator(promptService);
 
-    psiFile.accept(
-        new PsiRecursiveElementVisitor() {
-          @Override
-          public void visitElement(@NotNull PsiElement element) {
-            super.visitElement(element);
+    psiFile.accept(getElementVisitor(project, generator));
+  }
 
-            if (element instanceof PsiMethod) {
-              handlePsiMethod((PsiMethod) element, generator, project);
-            }
+  @NotNull
+  protected PsiRecursiveElementVisitor getElementVisitor(Project project, Generator generator) {
+    return new PsiRecursiveElementVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        super.visitElement(element);
 
-            if (element instanceof PsiClass) {
-              handlePsiClass((PsiClass) element, generator, project);
-            }
-          }
-        });
+        if (element instanceof PsiMethod) {
+          handlePsiMethod((PsiMethod) element, generator, project);
+        }
+
+        if (element instanceof PsiClass) {
+          handlePsiClass((PsiClass) element, generator, project);
+        }
+      }
+    };
   }
 
   private static boolean isDumbMode(Project project) {
@@ -75,7 +79,7 @@ public class Action extends AnAction {
     return false;
   }
 
-  private void handlePsiMethod(PsiMethod method, Generator generator, Project project) {
+  protected void handlePsiMethod(PsiMethod method, Generator generator, Project project) {
     if (method.getDocComment() != null) return;
 
     String javadoc =
@@ -87,7 +91,7 @@ public class Action extends AnAction {
     }
   }
 
-  private void handlePsiClass(PsiClass psiClass, Generator generator, Project project) {
+  protected void handlePsiClass(PsiClass psiClass, Generator generator, Project project) {
     if (psiClass.getDocComment() != null) return;
 
     String javadoc = generator.generateJavaDoc("Class " + psiClass.getName(), false);
